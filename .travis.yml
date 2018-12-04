@@ -32,8 +32,10 @@ install:
   # Create new links for python so that we are using python 3.5
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo rm /usr/bin/python3; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo rm /usr/bin/python; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo ln -s /usr/bin/python3 /usr/bin/python3.5; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo ln -s /usr/bin/python /usr/bin/python3.5; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo ln -s /usr/bin/python3.5 
+/usr/bin/python3; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo ln -s /usr/bin/python3.5 
+/usr/bin/python; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then ls -l /usr/bin; fi
   # Now we can install things using python3
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo pip3 install meson; fi
