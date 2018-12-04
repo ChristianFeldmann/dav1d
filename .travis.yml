@@ -23,7 +23,7 @@ before_install:
   
 install:
   #On linux, install the new g++ version
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install python3; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install python3.5; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -qq g++-6; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install ninja-build; fi
