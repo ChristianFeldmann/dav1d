@@ -27,7 +27,6 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install python3.5; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -qq g++-6; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install ninja-build; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install python3-pip; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install nasm; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then python3.5 --version; fi
@@ -39,6 +38,10 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then ls -l /usr/bin; fi
   # Now we can install things using python3
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo pip3 install meson; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo unzip ninja-linux.zip -d /usr/local/bin/; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo update-alternatives --install /usr/bin/ninja ninja /usr/local/bin/ninja 1 --force; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then /usr/bin/ninja --version; fi
 
 script:
   # Build
