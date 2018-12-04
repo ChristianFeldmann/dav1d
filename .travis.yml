@@ -26,7 +26,6 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -qq g++-6; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install ninja-build; fi
-  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -qq meson; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install python3-pip; fi
   - if [ "$TRAVIS_OS_NAME" = "linux" ]; sudo pip3 install meson; fi
 
