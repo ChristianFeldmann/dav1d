@@ -20,10 +20,8 @@ install:
   - cd ..
   # Install meson
   - ps: $env:path="C:\python36-x64\Scripts;$($env:path)"
-  - dir C:\python36-x64\Scripts
   - pip3 install meson
-  - where meson
-  - meson --version
+  - cd C:\projects\dav1d
 
 build_script:
   - meson build --buildtype release
