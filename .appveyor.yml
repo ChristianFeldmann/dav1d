@@ -20,6 +20,7 @@ install:
   - cd ..
   # Install meson
   - C:\Python36-x64\python.exe -m pip install meson
+  - C:\Python36-x64\python.exe -m pip show meson
 
 build_script:
   - meson build --buildtype release
