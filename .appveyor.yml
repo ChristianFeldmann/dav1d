@@ -19,10 +19,11 @@ install:
   - ps: $env:path="C:\projects\ninja;$($env:path)"
   - cd ..
   # Install meson
-  - C:\Python36-x64\python.exe -m pip install meson
-  - C:\Python36-x64\python.exe -m pip show meson
-  - ps: $env:path="C:\python36-x64\lib\site-packages\mesonbuild;$($env:path)"
-  - dir C:\python36-x64\lib\site-packages\mesonbuild
+  - ps: $env:path="C:\python36-x64\Scripts;$($env:path)"
+  - dir C:\python36-x64\Scripts
+  - pip3 install meson
+  - where meson
+  - meson --version
 
 build_script:
   - meson build --buildtype release
