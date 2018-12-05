@@ -19,7 +19,7 @@ install:
   - ps: $env:path="C:\projects\ninja;$($env:path)"
   - cd ..
   # Install meson
-  - "C:\Python36-x64\python.exe" -m pip install meson
+  - C:\Python36-x64\python.exe -m pip install meson
 
 build_script:
   - meson build --buildtype release
