@@ -3,9 +3,9 @@ matrix:
   include:
     - os: linux
       dist: trusty
-      env: DEPLOY_FILE=build/src/dav1d.so
+      env: DEPLOY_FILE=build/src/libdav1d.so.0.0.1
     - os: osx
-      env: DEPLOY_FILE=build/src/dav1d.dylib
+      env: DEPLOY_FILE=build/src/libdav1d.dylib.0.0.1
 compiler:
 - gcc
 git:
@@ -49,6 +49,7 @@ script:
 # Build
 - meson build --buildtype release
 - ninja -C build
+- ls build/src/
 
 deploy:
   skip_cleanup: true
