@@ -30,4 +30,11 @@ build_script:
 artifacts:
   - path: build/src/dav1d.dll
     name: dav1d library
-    
+
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: boWJ9aVfVBpOkBGzWF5yS5/Os3eDUjFfziOY04+LNA+7v+PnMFBtHeMJe2PjK4gm
+  artifact: build/src/dav1d.dll
+  on:
+    appveyor_repo_tag: true        # deploy on tag push only

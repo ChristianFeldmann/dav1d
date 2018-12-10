@@ -1,17 +1,15 @@
 language: cpp
-
-os:
-  - linux
-  - osx
-dist:
-  # Request Ubuntu 14 as linux
-  - trusty
-compiler: 
-  - gcc
-
-branches:
-  except:
-    - gh-pages
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      env: DEPLOY_FILE=build/srd/dav1d.so
+    - os: osx
+      env: DEPLOY_FILE=build/dav1d/dav1d.dylib
+compiler:
+- gcc
+git:
+  depth: 3
 
 before_install:
   - eval "${MATRIX_EVAL}"
@@ -48,7 +46,16 @@ install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install nasm; fi
 
 script:
-  # Build
-  - meson build --buildtype release
-  - ninja -C build
+# Build
+- meson build --buildtype release
+- ninja -C build
 
+deploy:
+  skip_cleanup: true
+  provider: releases
+  api_key:
+    secure: EvZ4Q19kQm1mxtfe2tR9gOusirp0XuxuORx99mA4M6bsCdnRz36CsxIMlq0NYoqY4voqIswG9pyG6loc6mEdqUqw5+xwlbttzRyInFyXcwC2nPBBMF/LLBRyldvP6LK1wFLndta4WHeGPDBqoP2bKg72B6ML8v4MoVMoA8trLq4XuAc7/wWAqdZrspknbkEDLVPQLM0+7SRXNqvBCcb3OWuUEJHlxOUi6/WAz8wf7xp+62aHgldQtabSPGbNf5xWToYymHIam9zb9/aVcnC6Vrz35WafETeGIBac1JVpXK+kJu8U0Jhpntnx3rvP8dih6paAZP/HE0YKdKBSJunvFLE1Q0uX8Mfpj/akmh8kj3lWkWq8zYn7bBVoK5G01TbPgkBKK/ZZIGjunY130iQG/cCiQMBOf+Nsz6XT6gjO18f03OiHwSBFFzyFe+XiZmBvVmhh///z7J3+fi2thUX1yYvSV8PEv3so33LRvtSdim73dX9O0i75EOY1qGtDthaM5n8v27jgwRjDbnf6T6X3yRrTQbsIDsxHU9Z37Pny+QfBVbgoc4vSEPCLYnyB52tCqpCxh72LT38OLWRr1JOl6y/j7cjwOtdXO5ZGLkHRESyy/WIAzfh8iXKUUIxP/bc6ACRxgRSNs0x1Cx68OPczCguSuIiHPUToGDIWgIXGj7I=
+  file: $DEPLOY_FILE
+  on:
+    repo: ChristianFeldmann/dav1d
+    tags: true
