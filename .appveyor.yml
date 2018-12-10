@@ -27,5 +27,7 @@ build_script:
   - meson build --buildtype release
   - ninja -C build
 
-after_build:
-  # Pack all the files in one direcory and create the zip and installer
+artifacts:
+  - path: build/src/dav1d.dll
+    name: dav1d library
+    
