@@ -3,9 +3,9 @@ matrix:
   include:
     - os: linux
       dist: trusty
-      env: DEPLOY_FILE=build/srd/dav1d.so
+      env: DEPLOY_FILE=build/src/dav1d.so
     - os: osx
-      env: DEPLOY_FILE=build/dav1d/dav1d.dylib
+      env: DEPLOY_FILE=build/src/dav1d.dylib
 compiler:
 - gcc
 git:
