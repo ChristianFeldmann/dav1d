@@ -66,6 +66,16 @@ void dav1d_default_settings(Dav1dSettings *const s) {
     s->all_layers = 1; // just until the tests are adjusted
 }
 
+void dav1d_default_analyzer_settings(Dav1dAnalyzerSettings *const s) {
+    s->export_prediction = 0;
+    s->export_prefilter = 0;
+    s->export_bitsperblk = 0;
+    s->export_bitsused = 0;
+    s->export_blkdata = 0;
+    s->export_headers = 0;
+    s->export_invisible_frames = 0;
+}
+
 int dav1d_open(Dav1dContext **const c_out,
                const Dav1dSettings *const s)
 {
@@ -166,6 +176,19 @@ error:
     }
     fprintf(stderr, "Failed to allocate memory: %s\n", strerror(errno));
     return -ENOMEM;
+}
+
+int dav1d_set_analyzer_settings(Dav1dContext *const c, const Dav1dAnalyzerSettings *const s) {
+    c->analyzer_settings = 0;
+    if (s->export_prediction) c->analyzer_settings |= EXPORT_PREDICTION;
+    if (s->export_prefilter)  c->analyzer_settings |= EXPORT_PREFILTER;
+    if (s->export_headers)    c->analyzer_settings |= EXPORT_HEADERS;
+    if (s->export_blkdata)    c->analyzer_settings |= EXPORT_BLKDATA;
+    if (s->export_bitsperblk) c->analyzer_settings |= EXPORT_BITSPERBLK;
+    if (s->export_bitsused)   c->analyzer_settings |= EXPORT_BITSUSED;
+    c->export_invisible_frames = s->export_invisible_frames;
+
+    return 0;
 }
 
 static void dummy_free(const uint8_t *const data, void *const user_data) {
