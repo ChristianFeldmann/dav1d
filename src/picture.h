@@ -57,7 +57,8 @@ typedef struct Dav1dThreadPicture {
 int dav1d_thread_picture_alloc(Dav1dThreadPicture *p, int w, int h,
                                enum Dav1dPixelLayout layout, int bpc,
                                struct thread_data *t, int visible,
-                               Dav1dPicAllocator *);
+                               Dav1dPicAllocator *,
+                               const unsigned analyzer_flags);
 
 /**
  * Allocate a picture with identical metadata to an existing picture.
@@ -67,7 +68,8 @@ int dav1d_thread_picture_alloc(Dav1dThreadPicture *p, int w, int h,
  * dimensions, use src->p.w as width.
  */
 int dav1d_picture_alloc_copy(Dav1dPicture *dst, const int w,
-                             const Dav1dPicture *src);
+                             const Dav1dPicture *src,
+                             const unsigned analyzer_flags);
 
 /**
  * Create a copy of a picture.

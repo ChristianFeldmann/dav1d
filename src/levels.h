@@ -287,6 +287,5 @@ typedef struct Av1Block {
 #define EXPORT_BITSUSED   (1 << 2)
 #define EXPORT_BITSPERBLK (1 << 3)
 #define EXPORT_BLKDATA    (1 << 4)
-#define EXPORT_HEADERS    (1 << 5)
 
 #endif /* __DAV1D_SRC_LEVELS_H__ */

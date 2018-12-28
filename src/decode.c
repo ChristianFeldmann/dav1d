@@ -690,7 +690,10 @@ static int decode_b(Dav1dTileContext *const t,
 {
     Dav1dTileState *const ts = t->ts;
     const Dav1dFrameContext *const f = t->f;
-    Av1Block b_mem, *const b = f->frame_thread.pass ?
+    const Dav1dContext *const c = f->c;
+    Av1Block b_mem, *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+        &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
+        f->frame_thread.pass ?
         &f->frame_thread.b[t->by * f->b4_stride + t->bx] : &b_mem;
     const uint8_t *const b_dim = dav1d_block_dimensions[bs];
     const int bx4 = t->bx & 31, by4 = t->by & 31;
@@ -1909,6 +1912,7 @@ static int decode_sb(Dav1dTileContext *const t, const enum BlockLevel bl,
                      const EdgeNode *const node)
 {
     const Dav1dFrameContext *const f = t->f;
+    const Dav1dContext *const c = f->c;
     const int hsz = 16 >> bl;
     const int have_h_split = f->bw > t->bx + hsz;
     const int have_v_split = f->bh > t->by + hsz;
@@ -1933,7 +1937,9 @@ static int decode_sb(Dav1dTileContext *const t, const enum BlockLevel bl,
 
     if (have_h_split && have_v_split) {
         if (f->frame_thread.pass == 2) {
-            const Av1Block *const b = &f->frame_thread.b[t->by * f->b4_stride + t->bx];
+            Av1Block *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+                &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
+                &f->frame_thread.b[t->by * f->b4_stride + t->bx];
             bp = b->bl == bl ? b->bp : PARTITION_SPLIT;
         } else {
             const unsigned n_part = bl == BL_8X8 ? N_SUB8X8_PARTITIONS :
@@ -2106,7 +2112,9 @@ static int decode_sb(Dav1dTileContext *const t, const enum BlockLevel bl,
     } else if (have_h_split) {
         unsigned is_split;
         if (f->frame_thread.pass == 2) {
-            const Av1Block *const b = &f->frame_thread.b[t->by * f->b4_stride + t->bx];
+            Av1Block *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+                &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
+                &f->frame_thread.b[t->by * f->b4_stride + t->bx];
             is_split = b->bl != bl;
         } else {
             is_split = msac_decode_bool(&t->ts->msac, gather_top_partition_prob(pc, bl) >> EC_PROB_SHIFT);
@@ -2134,7 +2142,9 @@ static int decode_sb(Dav1dTileContext *const t, const enum BlockLevel bl,
         assert(have_v_split);
         unsigned is_split;
         if (f->frame_thread.pass == 2) {
-            const Av1Block *const b = &f->frame_thread.b[t->by * f->b4_stride + t->bx];
+            Av1Block *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+                &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
+                &f->frame_thread.b[t->by * f->b4_stride + t->bx];
             is_split = b->bl != bl;
         } else {
             is_split = msac_decode_bool(&t->ts->msac, gather_left_partition_prob(pc, bl) >> EC_PROB_SHIFT);
@@ -2989,8 +2999,11 @@ int dav1d_submit_frame(Dav1dContext *const c) {
         if (out_delayed->p.data[0]) {
             const unsigned progress = atomic_load_explicit(&out_delayed->progress[1],
                                                            memory_order_relaxed);
-            if (out_delayed->visible && progress != FRAME_ERROR)
-                dav1d_picture_ref(&c->out, &out_delayed->p);
+            if ((out_delayed->visible || c->export_invisible_frames) && 
+                progress != FRAME_ERROR) {
+                    dav1d_picture_ref(&c->out, &out_delayed->p);
+                    c->out.invisible = !out_delayed->visible;
+            }
             dav1d_thread_picture_unref(out_delayed);
         }
     } else {
@@ -3121,7 +3134,9 @@ int dav1d_submit_frame(Dav1dContext *const c) {
                                      f->frame_hdr->height,
                                      f->seq_hdr->layout, bpc,
                                      c->n_fc > 1 ? &f->frame_thread.td : NULL,
-                                     f->frame_hdr->show_frame, &c->allocator);
+                                     f->frame_hdr->show_frame,
+                                     c->analyzer_settings,
+                                     &c->allocator);
     if (res < 0) goto error;
 
     f->sr_cur.p.m = f->tile[0].data.m;
@@ -3133,7 +3148,8 @@ int dav1d_submit_frame(Dav1dContext *const c) {
     dav1d_ref_inc(f->seq_hdr_ref);
 
     if (f->frame_hdr->super_res.enabled) {
-        res = dav1d_picture_alloc_copy(&f->cur, f->frame_hdr->width[0], &f->sr_cur.p);
+        res = dav1d_picture_alloc_copy(&f->cur, f->frame_hdr->width[0], 
+                                       &f->sr_cur.p, c->analyzer_settings);
         if (res < 0) goto error;
     } else {
         dav1d_picture_ref(&f->cur, &f->sr_cur.p);
@@ -3152,8 +3168,10 @@ int dav1d_submit_frame(Dav1dContext *const c) {
 
     // move f->cur into output queue
     if (c->n_fc == 1) {
-        if (f->frame_hdr->show_frame)
+        if (f->frame_hdr->show_frame || c->export_invisible_frames) {
             dav1d_picture_ref(&c->out, &f->sr_cur.p);
+            c->out.invisible = !f->frame_hdr->show_frame;
+        }
     } else {
         dav1d_thread_picture_ref(out_delayed, &f->sr_cur);
     }

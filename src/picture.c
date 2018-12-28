@@ -97,12 +97,77 @@ static void free_buffer(const uint8_t *const data, void *const user_data) {
     free(pic_ctx);
 }
 
+static int picture_alloc_analyzer_storage(Dav1dPicture *const p,
+                                          const unsigned analyzer_flags)
+{
+    const int aligned_w = (p->p.w + 127) & ~127;
+    const int aligned_h = (p->p.h + 127) & ~127;
+    int frame_mul = 0;
+    if (analyzer_flags & EXPORT_PREDICTION) frame_mul++;
+    if (analyzer_flags & EXPORT_PREFILTER) frame_mul += 3;
+    const size_t blk_sz = analyzer_flags & EXPORT_BLKDATA ?
+        (aligned_w >> 2) * (aligned_h >> 2) * sizeof(Av1Block) : 0;
+#if 0
+    const size_t bp_blk_sz = analyzer_flags & EXPORT_BITSPERBLK ?
+        (aligned_w >> 2) * (aligned_h >> 2) * sizeof(uint16_t) : 0;
+    const size_t bitsused_sz = analyzer_flags & EXPORT_BITSUSED ?
+        sizeof(uint64_t) * 10 : 0;
+#else
+    const size_t bp_blk_sz = 0, bitsused_sz = 0;
+#endif
+    const int ss_ver = p->p.layout == DAV1D_PIXEL_LAYOUT_I420;
+    const size_t y_sz = p->stride[0] * aligned_h;
+    const size_t uv_sz = p->stride[1] * (aligned_h >> ss_ver);
+    const size_t total_sz = (y_sz + 2 * uv_sz) * frame_mul +
+                            blk_sz + bp_blk_sz + bitsused_sz;
+
+    uint8_t *data = dav1d_alloc_aligned(total_sz, 32);
+    if (data == NULL) {
+        fprintf(stderr, "Failed to allocate analyzer memory of size %zu: %s\n",
+                total_sz, strerror(errno));
+        return -1;
+    }
+
+    const int has_chroma = p->p.layout != DAV1D_PIXEL_LAYOUT_I400;
+#define fill_pixmaps(name) \
+    p->name[0] = data; \
+    p->name[1] = has_chroma ? data + y_sz : NULL; \
+    p->name[2] = has_chroma ? data + y_sz + uv_sz : NULL; \
+    data += y_sz + 2 * uv_sz
+    if (analyzer_flags & EXPORT_PREDICTION) {
+        fill_pixmaps(pred);
+    }
+    if (analyzer_flags & EXPORT_PREFILTER) {
+        fill_pixmaps(pre_lpf);
+        fill_pixmaps(pre_cdef);
+        fill_pixmaps(pre_rest);
+    }
+#undef fill_pixmaps
+    if (analyzer_flags & EXPORT_BLKDATA) {
+        p->blk_data = data;
+        data += blk_sz;
+    }
+#if 0
+    if (analyzer_flags & EXPORT_BITSPERBLK) {
+        p->blk_data = data;
+        data += bp_blk_sz;
+    }
+    if (analyzer_flags & EXPORT_BITSUSED) {
+        p->blk_data = data;
+        data += bitsused_sz;
+    }
+#endif
+
+    return 0;
+}
+
 static int picture_alloc_with_edges(Dav1dPicture *const p,
                                     const int w, const int h,
                                     const enum Dav1dPixelLayout layout,
                                     const int bpc,
                                     Dav1dPicAllocator *const p_allocator,
-                                    const size_t extra, void **const extra_ptr)
+                                    const size_t extra, void **const extra_ptr,
+                                    const unsigned analyzer_flags)
 {
     if (p->data[0]) {
         fprintf(stderr, "Picture already allocated!\n");
@@ -137,6 +202,8 @@ static int picture_alloc_with_edges(Dav1dPicture *const p,
         return -ENOMEM;
     }
 
+    picture_alloc_analyzer_storage(p, analyzer_flags);
+
     if (extra && extra_ptr)
         *extra_ptr = &pic_ctx->extra_ptr;
 
@@ -147,14 +214,16 @@ int dav1d_thread_picture_alloc(Dav1dThreadPicture *const p,
                                const int w, const int h,
                                const enum Dav1dPixelLayout layout, const int bpc,
                                struct thread_data *const t, const int visible,
-                               Dav1dPicAllocator *const p_allocator)
+                               Dav1dPicAllocator *const p_allocator,
+                               const unsigned analyzer_flags)
 {
     p->t = t;
 
     const int res =
         picture_alloc_with_edges(&p->p, w, h, layout, bpc, p_allocator,
                                  t != NULL ? sizeof(atomic_int) * 2 : 0,
-                                 (void **) &p->progress);
+                                 (void **) &p->progress,
+                                 analyzer_flags);
     if (res) return res;
 
     p->visible = visible;
@@ -166,12 +235,13 @@ int dav1d_thread_picture_alloc(Dav1dThreadPicture *const p,
 }
 
 int dav1d_picture_alloc_copy(Dav1dPicture *const dst, const int w,
-                             const Dav1dPicture *const src)
+                             const Dav1dPicture *const src,
+                             const unsigned analyzer_flags)
 {
     struct pic_ctx_context *const pic_ctx = src->ref->user_data;
     const int res = picture_alloc_with_edges(dst, w, src->p.h, src->p.layout,
                                              src->p.bpc, &pic_ctx->allocator,
-                                             0, NULL);
+                                             0, NULL, analyzer_flags);
 
     if (!res) {
         dst->p = src->p;

@@ -59,7 +59,6 @@ typedef struct Dav1dAnalyzerSettings {
     int export_bitsperblk;
     int export_bitsused;
     int export_blkdata;
-    int export_headers;
     int export_invisible_frames;
 } Dav1dAnalyzerSettings;
 

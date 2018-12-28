@@ -64,6 +64,13 @@ typedef struct Dav1dPicture {
     struct Dav1dRef *frame_hdr_ref, *seq_hdr_ref, *ref; ///< allocation origins
 
     void *allocator_data; ///< pointer managed by the allocator
+
+    /// --------------------------
+    /// Everything below this line is from the analizer extension. 
+    
+    void *pred[3], *pre_lpf[3], *pre_cdef[3], *pre_rest[3];
+    void *blk_data;
+    int invisible;
 } Dav1dPicture;
 
 typedef struct Dav1dPicAllocator {
