@@ -793,8 +793,11 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
                     hex_dump(dst, PXSTRIDE(f->cur.stride[0]),
                              bw4 * 4, bh4 * 4, "y-pal-pred");
                 if (c->analyzer_settings & EXPORT_PREDICTION)
-                    copy_plane((char*)dst + (f->cur.pred[0] - f->cur.data[0]), dst,
-                               f->cur.stride[0], bw4 * 4, bh4 * 4);
+                {
+                    pixel *pred = ((pixel *) f->cur.pred[0]) +
+                                  4 * (t->by * PXSTRIDE(f->cur.stride[0]) + t->bx);
+                    copy_plane(pred, dst, f->cur.stride[0], bw4 * 4, bh4 * 4);
+                }
             }
 
             const int intra_flags = (sm_flag(t->a, bx4) |
@@ -811,6 +814,9 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
                  y += t_dim->h, t->by += t_dim->h)
             {
                 pixel *dst = ((pixel *) f->cur.data[0]) +
+                               4 * (t->by * PXSTRIDE(f->cur.stride[0]) +
+                                    t->bx + init_x);
+                pixel *pred = ((pixel *) f->cur.pred[0]) +
                                4 * (t->by * PXSTRIDE(f->cur.stride[0]) +
                                     t->bx + init_x);
                 for (x = init_x, t->bx += init_x; x < sub_w4;
@@ -855,10 +861,9 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
                                  t_dim->w * 4, 2, "t");
                         hex_dump(dst, f->cur.stride[0],
                                  t_dim->w * 4, t_dim->h * 4, "y-intra-pred");
-                        if (c->analyzer_settings & EXPORT_PREDICTION)
-                        copy_plane((char*)dst + (f->cur.pred[0] - f->cur.data[0]), dst,
-                                   f->cur.stride[0], t_dim->w * 4, t_dim->h * 4);
                     }
+                    if (c->analyzer_settings & EXPORT_PREDICTION)
+                        copy_plane(pred, dst, f->cur.stride[0], t_dim->w * 4, t_dim->h * 4);
 
                 skip_y_pred: {}
                     if (!b->skip) {
@@ -912,6 +917,7 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
 #undef set_ctx
                     }
                     dst += 4 * t_dim->w;
+                    pred += 4 * t_dim->w;
                 }
                 t->bx -= x;
             }
@@ -931,6 +937,8 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
                                               (t->by >> ss_ver) * PXSTRIDE(stride));
                 pixel *const uv_dst[2] = { ((pixel *) f->cur.data[1]) + uv_off,
                                            ((pixel *) f->cur.data[2]) + uv_off };
+                pixel *const uv_pred[2] = { ((pixel *) f->cur.pred[1]) + uv_off,
+                                            ((pixel *) f->cur.pred[2]) + uv_off };
 
                 const int furthest_r =
                     ((cw4 << ss_hor) + t_dim->w - 1) & ~(t_dim->w - 1);
@@ -973,8 +981,7 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
                 }
                 if (c->analyzer_settings & EXPORT_PREDICTION)
                     for (int pl = 0; pl < 2; pl++)
-                        copy_plane((char*)uv_dst[pl] + (f->cur.pred[1 + pl] - f->cur.data[1 + pl]),
-                                   uv_dst[pl], stride, cbw4 * 4, cbh4 * 4);
+                        copy_plane(uv_pred[pl], uv_dst[pl], stride, cbw4 * 4, cbh4 * 4);
             } else if (b->pal_sz[1]) {
                 ptrdiff_t uv_dstoff = 4 * ((t->bx >> ss_hor) +
                                            (t->by >> ss_ver) * PXSTRIDE(f->cur.stride[1]));
@@ -1030,6 +1037,10 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
                     pixel *dst = ((pixel *) f->cur.data[1 + pl]) +
                                    4 * ((t->by >> ss_ver) * PXSTRIDE(stride) +
                                         ((t->bx + init_x) >> ss_hor));
+                    pixel *pred = ((pixel *) f->cur.pred[1 + pl]) +
+                                   4 * ((t->by >> ss_ver) * PXSTRIDE(stride) +
+                                        ((t->bx + init_x) >> ss_hor));
+
                     for (x = init_x >> ss_hor, t->bx += init_x; x < sub_cw4;
                          x += uv_t_dim->w, t->bx += uv_t_dim->w << ss_hor)
                     {
@@ -1089,8 +1100,7 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
                                      uv_t_dim->h * 4, pl ? "v-intra-pred" : "u-intra-pred");
                         }
                         if (c->analyzer_settings & EXPORT_PREDICTION)
-                            copy_plane((char*)dst + (f->cur.pred[1 + pl] - f->cur.data[1 + pl]),
-                                       dst, stride, uv_t_dim->w * 4, uv_t_dim->h * 4);
+                            copy_plane(pred, dst, stride, uv_t_dim->w * 4, uv_t_dim->h * 4);
 
                     skip_uv_pred: {}
                         if (!b->skip) {
@@ -1147,6 +1157,7 @@ void bytefn(dav1d_recon_b_intra)(Dav1dTileContext *const t, const enum BlockSize
 #undef set_ctx
                         }
                         dst += uv_t_dim->w * 4;
+                        pred += uv_t_dim->w * 4;
                     }
                     t->bx -= x << ss_hor;
                 }
@@ -1180,6 +1191,8 @@ int bytefn(dav1d_recon_b_inter)(Dav1dTileContext *const t, const enum BlockSize 
     // prediction
     const int cbh4 = (bh4 + ss_ver) >> ss_ver, cbw4 = (bw4 + ss_hor) >> ss_hor;
     pixel *dst = ((pixel *) f->cur.data[0]) +
+        4 * (t->by * PXSTRIDE(f->cur.stride[0]) + t->bx);
+    pixel *pred = ((pixel *) f->cur.pred[0]) +
         4 * (t->by * PXSTRIDE(f->cur.stride[0]) + t->bx);
     const ptrdiff_t uvdstoff =
         4 * ((t->bx >> ss_hor) + (t->by >> ss_ver) * PXSTRIDE(f->cur.stride[1]));
@@ -1480,13 +1493,11 @@ int bytefn(dav1d_recon_b_inter)(Dav1dTileContext *const t, const enum BlockSize 
         }
     }
     if (c->analyzer_settings & EXPORT_PREDICTION) {
-        copy_plane((char*)dst + (f->cur.pred[0] - f->cur.data[0]), dst,
-                   f->cur.stride[0], bw4 * 4, bh4 * 4);
+        copy_plane(pred, dst, f->cur.stride[0], bw4 * 4, bh4 * 4);
         if (has_chroma) for (int pl = 0; pl < 2; pl++) {
-            pixel *const uvdst = &f->cur.data[1 + pl][uvdstoff];
-            copy_plane((char*)uvdst + (f->cur.pred[1 + pl] -
-                                f->cur.data[1 + pl]), uvdst,
-                       f->cur.stride[1], cbw4 * 4, cbh4 * 4);
+            pixel *const uvdst = &((pixel *) f->cur.data[1 + pl])[uvdstoff];
+            pixel *const uvpred = &((pixel *) f->cur.pred[1 + pl])[uvdstoff];
+            copy_plane(uvpred, uvdst, f->cur.stride[1], cbw4 * 4, cbh4 * 4);
         }
     }
  
@@ -1519,6 +1530,7 @@ int bytefn(dav1d_recon_b_inter)(Dav1dTileContext *const t, const enum BlockSize 
             // coefficient coding & inverse transforms
             int y_off = !!init_y, y;
             dst += PXSTRIDE(f->cur.stride[0]) * 4 * init_y;
+            pred += PXSTRIDE(f->cur.stride[0]) * 4 * init_y;
             for (y = init_y, t->by += init_y; y < imin(h4, init_y + 16);
                  y += ytx->h, y_off++)
             {
@@ -1531,10 +1543,12 @@ int bytefn(dav1d_recon_b_inter)(Dav1dTileContext *const t, const enum BlockSize 
                     t->bx += ytx->w;
                 }
                 dst += PXSTRIDE(f->cur.stride[0]) * 4 * ytx->h;
+                pred += PXSTRIDE(f->cur.stride[0]) * 4 * ytx->h;
                 t->bx -= x;
                 t->by += ytx->h;
             }
             dst -= PXSTRIDE(f->cur.stride[0]) * 4 * y;
+            pred -= PXSTRIDE(f->cur.stride[0]) * 4 * y;
             t->by -= y;
 
             // chroma coefs and inverse transform
@@ -1615,13 +1629,14 @@ void bytefn(dav1d_filter_sbrow)(Dav1dFrameContext *const f, const int sby) {
 
     if (c->analyzer_settings & EXPORT_PREFILTER) {
         const int ss_hor = f->cur.p.layout != DAV1D_PIXEL_LAYOUT_I444;
-        for (int pl = 0; pl < 3; pl++)
-            copy_plane(((char*) f->cur.pre_lpf[pl]) +
-                           (sby * f->sb_step * 4 * PXSTRIDE(f->cur.stride[!!pl]) >>
-                            (ss_ver & !!pl)),
-                       f->lf.p[pl], f->cur.stride[!!pl],
+        for (int pl = 0; pl < 3; pl++) {
+            pixel *const pre_lpf = (pixel *)f->cur.pre_lpf[pl] + 
+                                   (sby * f->sb_step * 4 * PXSTRIDE(f->cur.stride[!!pl]) >>
+                                   (ss_ver & !!pl));
+            copy_plane(pre_lpf, f->lf.p[pl], f->cur.stride[!!pl],
                        f->bw * 4 >> (ss_hor & !!pl),
                        4 * imin(f->sb_step, f->bh - sby * f->sb_step) >> (ss_ver & !!pl));
+        }
     }
 
     if (f->frame_hdr->loopfilter.level_y[0] ||
