@@ -56,8 +56,8 @@ typedef struct Dav1dSettings {
 typedef struct Dav1dAnalyzerSettings {
     int export_prediction;
     int export_prefilter;
-    int export_bitsperblk;
-    int export_bitsused;
+    int export_bitsperblk;  // Not implemented yet
+    int export_bitsused;    // Not implemented yet
     int export_blkdata;
     int export_invisible_frames;
 } Dav1dAnalyzerSettings;

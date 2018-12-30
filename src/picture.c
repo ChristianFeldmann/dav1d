@@ -104,7 +104,7 @@ static int picture_alloc_analyzer_storage(Dav1dPicture *const p,
     const int aligned_h = (p->p.h + 127) & ~127;
     int frame_mul = 0;
     if (analyzer_flags & EXPORT_PREDICTION) frame_mul++;
-    if (analyzer_flags & EXPORT_PREFILTER) frame_mul += 3;
+    if (analyzer_flags & EXPORT_PREFILTER) frame_mul += 1;
     const size_t blk_sz = analyzer_flags & EXPORT_BLKDATA ?
         (aligned_w >> 2) * (aligned_h >> 2) * sizeof(Av1Block) : 0;
 #if 0
@@ -134,13 +134,12 @@ static int picture_alloc_analyzer_storage(Dav1dPicture *const p,
     p->name[1] = has_chroma ? data + y_sz : NULL; \
     p->name[2] = has_chroma ? data + y_sz + uv_sz : NULL; \
     data += y_sz + 2 * uv_sz
+    fill_pixmaps(data);
     if (analyzer_flags & EXPORT_PREDICTION) {
         fill_pixmaps(pred);
     }
     if (analyzer_flags & EXPORT_PREFILTER) {
         fill_pixmaps(pre_lpf);
-        fill_pixmaps(pre_cdef);
-        fill_pixmaps(pre_rest);
     }
 #undef fill_pixmaps
     if (analyzer_flags & EXPORT_BLKDATA) {
