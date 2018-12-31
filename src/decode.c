@@ -3135,8 +3135,8 @@ int dav1d_submit_frame(Dav1dContext *const c) {
                                      f->seq_hdr->layout, bpc,
                                      c->n_fc > 1 ? &f->frame_thread.td : NULL,
                                      f->frame_hdr->show_frame,
-                                     c->analyzer_settings,
-                                     &c->allocator);
+                                     &c->allocator,
+                                     c->analyzer_settings);
     if (res < 0) goto error;
 
     f->sr_cur.p.m = f->tile[0].data.m;

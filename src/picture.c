@@ -102,7 +102,7 @@ static int picture_alloc_analyzer_storage(Dav1dPicture *const p,
 {
     const int aligned_w = (p->p.w + 127) & ~127;
     const int aligned_h = (p->p.h + 127) & ~127;
-    int frame_mul = 0;
+    int frame_mul = 1;
     if (analyzer_flags & EXPORT_PREDICTION) frame_mul++;
     if (analyzer_flags & EXPORT_PREFILTER) frame_mul += 1;
     const size_t blk_sz = analyzer_flags & EXPORT_BLKDATA ?
