@@ -66,6 +66,15 @@ void dav1d_default_settings(Dav1dSettings *const s) {
     s->all_layers = 1; // just until the tests are adjusted
 }
 
+void dav1d_default_analyzer_settings(Dav1dAnalyzerSettings *const s) {
+    s->export_prediction = 0;
+    s->export_prefilter = 0;
+    s->export_bitsperblk = 0;
+    s->export_bitsused = 0;
+    s->export_blkdata = 0;
+    s->export_invisible_frames = 0;
+}
+
 int dav1d_open(Dav1dContext **const c_out,
                const Dav1dSettings *const s)
 {
@@ -168,6 +177,18 @@ error:
     return -ENOMEM;
 }
 
+int dav1d_set_analyzer_settings(Dav1dContext *const c, const Dav1dAnalyzerSettings *const s) {
+    c->analyzer_settings = 0;
+    if (s->export_prediction) c->analyzer_settings |= EXPORT_PREDICTION;
+    if (s->export_prefilter)  c->analyzer_settings |= EXPORT_PREFILTER;
+    if (s->export_blkdata)    c->analyzer_settings |= EXPORT_BLKDATA;
+    if (s->export_bitsperblk) c->analyzer_settings |= EXPORT_BITSPERBLK;
+    if (s->export_bitsused)   c->analyzer_settings |= EXPORT_BITSUSED;
+    c->export_invisible_frames = s->export_invisible_frames;
+
+    return 0;
+}
+
 static void dummy_free(const uint8_t *const data, void *const user_data) {
     assert(data && !user_data);
 }
@@ -252,7 +273,7 @@ static int output_image(Dav1dContext *const c, Dav1dPicture *const out,
     }
 
     // Apply film grain to a new copy of the image to avoid corrupting refs
-    int res = dav1d_picture_alloc_copy(out, in->p.w, in);
+    int res = dav1d_picture_alloc_copy(out, in->p.w, in, c->analyzer_settings);
     if (res < 0)
         return res;
 
@@ -304,8 +325,11 @@ int dav1d_get_picture(Dav1dContext *const c, Dav1dPicture *const out)
             if (out_delayed->p.data[0]) {
                 const unsigned progress = atomic_load_explicit(&out_delayed->progress[1],
                                                                memory_order_relaxed);
-                if (out_delayed->visible && progress != FRAME_ERROR)
+                if ((out_delayed->visible || c->export_invisible_frames) && 
+                     progress != FRAME_ERROR) {
                     dav1d_picture_ref(&c->out, &out_delayed->p);
+                    out->invisible = !out_delayed->visible;
+                }
                 dav1d_thread_picture_unref(out_delayed);
                 if (c->out.data[0])
                     return output_image(c, out, &c->out);
@@ -314,7 +338,7 @@ int dav1d_get_picture(Dav1dContext *const c, Dav1dPicture *const out)
         return -EAGAIN;
     }
 
-    while (in->sz > 0) {
+    while (in->sz > 0 && !c->out.data[0]) {
         if ((res = dav1d_parse_obus(c, in, 0)) < 0) {
             dav1d_data_unref(in);
             return res;

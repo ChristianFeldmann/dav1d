@@ -1358,6 +1358,7 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
             if (c->n_fc == 1) {
                 dav1d_picture_ref(&c->out,
                                   &c->refs[c->frame_hdr->existing_frame_idx].p.p);
+                c->out.invisible = 0;
                 c->out.m = in->m;
             } else {
                 // need to append this to the frame output queue
@@ -1375,8 +1376,11 @@ int dav1d_parse_obus(Dav1dContext *const c, Dav1dData *const in, int global) {
                 if (out_delayed->p.data[0]) {
                     const unsigned progress = atomic_load_explicit(&out_delayed->progress[1],
                                                                    memory_order_relaxed);
-                    if (out_delayed->visible && progress != FRAME_ERROR)
+                    if ((out_delayed->visible || c->export_invisible_frames) && 
+                         progress != FRAME_ERROR) {
                         dav1d_picture_ref(&c->out, &out_delayed->p);
+                        c->out.invisible = !out_delayed->visible;
+                    }
                     dav1d_thread_picture_unref(out_delayed);
                 }
                 dav1d_thread_picture_ref(out_delayed,

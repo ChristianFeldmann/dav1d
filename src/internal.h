@@ -119,6 +119,9 @@ struct Dav1dContext {
     int operating_point;
     unsigned operating_point_idc;
     int all_layers;
+
+    unsigned analyzer_settings;
+    int export_invisible_frames;
 };
 
 struct Dav1dFrameContext {

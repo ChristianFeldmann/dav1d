@@ -53,6 +53,15 @@ typedef struct Dav1dSettings {
     int all_layers; ///< output all spatial layers of a scalable AV1 biststream
 } Dav1dSettings;
 
+typedef struct Dav1dAnalyzerSettings {
+    int export_prediction;
+    int export_prefilter;
+    int export_bitsperblk;  // Not implemented yet
+    int export_bitsused;    // Not implemented yet
+    int export_blkdata;
+    int export_invisible_frames;
+} Dav1dAnalyzerSettings;
+
 /**
  * Get library version.
  */
@@ -64,6 +73,13 @@ DAV1D_API const char *dav1d_version(void);
  * @param s Input settings context.
  */
 DAV1D_API void dav1d_default_settings(Dav1dSettings *s);
+
+/**
+ * Initialize analyzer settings to default values (all zero)
+ *
+ * @param s Input analyzer settings context.
+ */
+DAV1D_API void dav1d_default_analyzer_settings(Dav1dAnalyzerSettings *s);
 
 /**
  * Allocate and open a decoder instance.
@@ -78,6 +94,19 @@ DAV1D_API void dav1d_default_settings(Dav1dSettings *s);
  * @return 0 on success, or < 0 (a negative errno code) on error.
  */
 DAV1D_API int dav1d_open(Dav1dContext **c_out, const Dav1dSettings *s);
+
+/**
+ * Apply the given analyzer settings.
+ * 
+ * @param     c The opened decoder instance. 
+ * @param     s The analyzer settings it set.
+ * 
+ * @note This must be called right after the decoder was opened 
+ *       (dav1d_open) and before any actual decoding was performed.
+ * 
+ * @return 0 on success, or < 0 (a negative errno code) on error.
+ */
+DAV1D_API int dav1d_set_analyzer_settings(Dav1dContext *c, const Dav1dAnalyzerSettings *s);
 
 /**
  * Parse a Sequence Header OBU from bitstream data.
