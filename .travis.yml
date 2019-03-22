@@ -50,7 +50,7 @@ script:
 - meson build --buildtype release
 - ninja -C build
 
-before_deploy:
+after_success:
 - ll build/src
 
 deploy:
