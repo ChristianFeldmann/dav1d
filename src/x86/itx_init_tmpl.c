@@ -77,7 +77,17 @@ decl_itx_fn(dav1d_inv_txfm_add_dct_dct_64x16_avx2);
 decl_itx_fn(dav1d_inv_txfm_add_dct_dct_64x32_avx2);
 decl_itx_fn(dav1d_inv_txfm_add_dct_dct_64x64_avx2);
 
-decl_itx_fn(dav1d_inv_txfm_add_dct_dct_4x4_ssse3);
+decl_itx17_fns( 4,  4, ssse3);
+decl_itx16_fns( 4,  8, ssse3);
+decl_itx16_fns( 8,  4, ssse3);
+decl_itx16_fns( 8,  8, ssse3);
+decl_itx16_fns( 4, 16, ssse3);
+decl_itx16_fns(16,  4, ssse3);
+decl_itx16_fns( 8, 16, ssse3);
+decl_itx16_fns(16,  8, ssse3);
+decl_itx12_fns(16, 16, ssse3);
+decl_itx2_fns ( 8, 32, ssse3);
+decl_itx2_fns (32,  8, ssse3);
 
 void bitfn(dav1d_itx_dsp_init_x86)(Dav1dInvTxfmDSPContext *const c) {
 #define assign_itx_fn(pfx, w, h, type, type_enum, ext) \
@@ -115,15 +125,23 @@ void bitfn(dav1d_itx_dsp_init_x86)(Dav1dInvTxfmDSPContext *const c) {
     assign_itx16_fn(pfx, w, h, ext); \
     assign_itx_fn(pfx, w, h, wht_wht,           WHT_WHT,           ext)
 
-#define assign_itx_ssse3_fn_8b() \
-    c->itxfm_add[TX_4X4][DCT_DCT] = dav1d_inv_txfm_add_dct_dct_4x4_ssse3;
 
     const unsigned flags = dav1d_get_cpu_flags();
 
     if (!(flags & DAV1D_X86_CPU_FLAG_SSSE3)) return;
 
 #if BITDEPTH == 8
-    assign_itx_ssse3_fn_8b();
+    assign_itx17_fn(,   4,  4, ssse3);
+    assign_itx16_fn(R,  4,  8, ssse3);
+    assign_itx16_fn(R,  8,  4, ssse3);
+    assign_itx16_fn(,   8,  8, ssse3);
+    assign_itx16_fn(R,  4, 16, ssse3);
+    assign_itx16_fn(R, 16,  4, ssse3);
+    assign_itx16_fn(R,  8, 16, ssse3);
+    assign_itx16_fn(R, 16,  8, ssse3);
+    assign_itx12_fn(,  16, 16, ssse3);
+    assign_itx2_fn (R,  8, 32, ssse3);
+    assign_itx2_fn (R, 32,  8, ssse3);
 #endif
 
     if (!(flags & DAV1D_X86_CPU_FLAG_AVX2)) return;

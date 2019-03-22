@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __DAV1D_SRC_LEVELS_H__
-#define __DAV1D_SRC_LEVELS_H__
+#ifndef DAV1D_SRC_LEVELS_H
+#define DAV1D_SRC_LEVELS_H
 
 #include <stdint.h>
 
@@ -41,6 +41,14 @@ enum ObuType {
     OBU_FRAME     = 6,
     OBU_REDUNDANT_FRAME_HDR = 7,
     OBU_PADDING   = 15,
+};
+
+enum ObuMetaType {
+    OBU_META_HDR_CLL     = 1,
+    OBU_META_HDR_MDCV    = 2,
+    OBU_META_SCALABILITY = 3,
+    OBU_META_ITUT_T35    = 4,
+    OBU_META_TIMECODE    = 5,
 };
 
 enum TxfmSize {
@@ -288,4 +296,4 @@ typedef struct Av1Block {
 #define EXPORT_BITSPERBLK (1 << 3)
 #define EXPORT_BLKDATA    (1 << 4)
 
-#endif /* __DAV1D_SRC_LEVELS_H__ */
+#endif /* DAV1D_SRC_LEVELS_H */
