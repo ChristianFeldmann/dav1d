@@ -25,8 +25,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __DAV1D_SRC_PICTURE_H__
-#define __DAV1D_SRC_PICTURE_H__
+#ifndef DAV1D_SRC_PICTURE_H
+#define DAV1D_SRC_PICTURE_H
 
 #include <stdatomic.h>
 
@@ -34,6 +34,7 @@
 #include "dav1d/picture.h"
 
 #include "src/thread_data.h"
+#include "src/ref.h"
 
 enum PlaneType {
     PLANE_TYPE_Y,
@@ -54,10 +55,7 @@ typedef struct Dav1dThreadPicture {
 /*
  * Allocate a picture with custom border size.
  */
-int dav1d_thread_picture_alloc(Dav1dThreadPicture *p, int w, int h,
-                               enum Dav1dPixelLayout layout, int bpc,
-                               struct thread_data *t, int visible,
-                               Dav1dPicAllocator *);
+int dav1d_thread_picture_alloc(Dav1dContext *c, Dav1dFrameContext *f, const int bpc);
 
 /**
  * Allocate a picture with identical metadata to an existing picture.
@@ -66,7 +64,7 @@ int dav1d_thread_picture_alloc(Dav1dThreadPicture *p, int w, int h,
  * For the more typical use case of allocating a new image of the same
  * dimensions, use src->p.w as width.
  */
-int dav1d_picture_alloc_copy(Dav1dPicture *dst, const int w,
+int dav1d_picture_alloc_copy(Dav1dContext *c, Dav1dPicture *dst, const int w,
                              const Dav1dPicture *src);
 
 /**
@@ -109,5 +107,6 @@ void dav1d_thread_picture_signal(const Dav1dThreadPicture *p, int y,
 
 int default_picture_allocator(Dav1dPicture *, void *cookie);
 void default_picture_release(Dav1dPicture *, void *cookie);
+void dav1d_picture_unref_internal(Dav1dPicture *p);
 
-#endif /* __DAV1D_SRC_PICTURE_H__ */
+#endif /* DAV1D_SRC_PICTURE_H */

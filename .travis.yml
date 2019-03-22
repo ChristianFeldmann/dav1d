@@ -1,0 +1,61 @@
+language: cpp
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+      env: DEPLOY_FILE=build/src/libdav1d.so.0.0.1
+    - os: osx
+      env: DEPLOY_FILE=build/src/libdav1d.0.dylib
+compiler:
+- gcc
+git:
+  depth: 3
+
+before_install:
+  - eval "${MATRIX_EVAL}"
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
+  # On linux also get a newer g++. The old one won't work.
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo add-apt-repository -y ppa:saiarcot895/chromium-beta; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo add-apt-repository -y ppa:jonathonf/nasm; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get update -qq; fi
+  
+install:
+  #On linux, install the new g++ version
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install python3.5; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install -qq g++-6; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-6 90; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install python3-pip; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo apt-get install nasm; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then python3.5 --version; fi
+  # Create new links for python so that we are using python 3.5
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo rm /usr/bin/python3; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo rm /usr/bin/python; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo ln -s /usr/bin/python3.5 /usr/bin/python3; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo ln -s /usr/bin/python3.5 /usr/bin/python; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then ls -l /usr/bin; fi
+  # Now we can install things using python3
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo pip3 install meson; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then wget https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-linux.zip; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo unzip ninja-linux.zip -d /usr/local/bin/; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then sudo update-alternatives --install /usr/bin/ninja ninja /usr/local/bin/ninja 1 --force; fi
+  - if [ "$TRAVIS_OS_NAME" = "linux" ]; then /usr/bin/ninja --version; fi
+  # MAC
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install ninja; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install meson; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew install nasm; fi
+
+script:
+# Build
+- meson build --buildtype release
+- ninja -C build
+
+deploy:
+  skip_cleanup: true
+  provider: releases
+  api_key:
+    secure: EvZ4Q19kQm1mxtfe2tR9gOusirp0XuxuORx99mA4M6bsCdnRz36CsxIMlq0NYoqY4voqIswG9pyG6loc6mEdqUqw5+xwlbttzRyInFyXcwC2nPBBMF/LLBRyldvP6LK1wFLndta4WHeGPDBqoP2bKg72B6ML8v4MoVMoA8trLq4XuAc7/wWAqdZrspknbkEDLVPQLM0+7SRXNqvBCcb3OWuUEJHlxOUi6/WAz8wf7xp+62aHgldQtabSPGbNf5xWToYymHIam9zb9/aVcnC6Vrz35WafETeGIBac1JVpXK+kJu8U0Jhpntnx3rvP8dih6paAZP/HE0YKdKBSJunvFLE1Q0uX8Mfpj/akmh8kj3lWkWq8zYn7bBVoK5G01TbPgkBKK/ZZIGjunY130iQG/cCiQMBOf+Nsz6XT6gjO18f03OiHwSBFFzyFe+XiZmBvVmhh///z7J3+fi2thUX1yYvSV8PEv3so33LRvtSdim73dX9O0i75EOY1qGtDthaM5n8v27jgwRjDbnf6T6X3yRrTQbsIDsxHU9Z37Pny+QfBVbgoc4vSEPCLYnyB52tCqpCxh72LT38OLWRr1JOl6y/j7cjwOtdXO5ZGLkHRESyy/WIAzfh8iXKUUIxP/bc6ACRxgRSNs0x1Cx68OPczCguSuIiHPUToGDIWgIXGj7I=
+  file: $DEPLOY_FILE
+  on:
+    repo: ChristianFeldmann/dav1d
+    tags: true

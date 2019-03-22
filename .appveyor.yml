@@ -1,0 +1,42 @@
+image: Visual Studio 2015
+configuration: Release
+platform:
+  - x64
+clone_folder: C:\projects\dav1d
+
+install:
+  - '"C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" amd64'
+  - cd C:\projects
+  # Install nasm
+  - curl -L -o nasm.zip https://www.nasm.us/pub/nasm/releasebuilds/2.14/win64/nasm-2.14-win64.zip
+  - 7z x nasm.zip
+  - ps: $env:path="C:\projects\nasm-2.14;$($env:path)"
+  # Install ninja
+  - mkdir ninja
+  - cd ninja
+  - curl -L -o ninja.zip https://github.com/ninja-build/ninja/releases/download/v1.8.2/ninja-win.zip
+  - 7z x ninja.zip
+  - ps: $env:path="C:\projects\ninja;$($env:path)"
+  - cd ..
+  # Install meson
+  - ps: $env:path="C:\python36-x64\Scripts;$($env:path)"
+  - pip3 install meson
+  - cd C:\projects\dav1d
+
+build_script:
+  - meson build --buildtype release
+  - ninja -C build
+
+artifacts:
+  - path: build/src/dav1d.dll
+    name: dav1d library
+  - path: build/tools/dav1d.exe
+    name: dav1d library
+
+deploy:
+  provider: GitHub
+  auth_token:
+    secure: boWJ9aVfVBpOkBGzWF5yS5/Os3eDUjFfziOY04+LNA+7v+PnMFBtHeMJe2PjK4gm
+  artifact: build/src/dav1d.dll, build/tools/dav1d.exe
+  on:
+    appveyor_repo_tag: true        # deploy on tag push only
