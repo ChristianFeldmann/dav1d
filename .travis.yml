@@ -51,7 +51,7 @@ script:
 - ninja -C build
 
 after_success:
-- ll build/src
+- ls -l build/src
 
 deploy:
   skip_cleanup: true
