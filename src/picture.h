@@ -55,7 +55,7 @@ typedef struct Dav1dThreadPicture {
 /*
  * Allocate a picture with custom border size.
  */
-int dav1d_thread_picture_alloc(Dav1dContext *c, Dav1dFrameContext *f, const int bpc, const unsigned analyzer_flags);
+int dav1d_thread_picture_alloc(Dav1dContext *c, Dav1dFrameContext *f, const int bpc);
 
 /**
  * Allocate a picture with identical metadata to an existing picture.
@@ -65,7 +65,7 @@ int dav1d_thread_picture_alloc(Dav1dContext *c, Dav1dFrameContext *f, const int 
  * dimensions, use src->p.w as width.
  */
 int dav1d_picture_alloc_copy(Dav1dContext *c, Dav1dPicture *dst, const int w,
-                             const Dav1dPicture *src, const unsigned analyzer_flags);
+                             const Dav1dPicture *src);
 
 /**
  * Create a copy of a picture.

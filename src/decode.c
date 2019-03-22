@@ -701,7 +701,7 @@ static int decode_b(Dav1dTileContext *const t,
     Dav1dTileState *const ts = t->ts;
     const Dav1dFrameContext *const f = t->f;
     const Dav1dContext *const c = f->c;
-    Av1Block b_mem, *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+    Av1Block b_mem, *const b = c->analyzer_flags & EXPORT_BLKDATA ?
         &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
         f->frame_thread.pass ?
         &f->frame_thread.b[t->by * f->b4_stride + t->bx] : &b_mem;
@@ -2020,7 +2020,7 @@ static int decode_sb(Dav1dTileContext *const t, const enum BlockLevel bl,
 
     if (have_h_split && have_v_split) {
         if (f->frame_thread.pass == 2) {
-            Av1Block *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+            Av1Block *const b = c->analyzer_flags & EXPORT_BLKDATA ?
                 &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
                 &f->frame_thread.b[t->by * f->b4_stride + t->bx];
             bp = b->bl == bl ? b->bp : PARTITION_SPLIT;
@@ -2195,7 +2195,7 @@ static int decode_sb(Dav1dTileContext *const t, const enum BlockLevel bl,
     } else if (have_h_split) {
         unsigned is_split;
         if (f->frame_thread.pass == 2) {
-            Av1Block *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+            Av1Block *const b = c->analyzer_flags & EXPORT_BLKDATA ?
                 &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
                 &f->frame_thread.b[t->by * f->b4_stride + t->bx];
             is_split = b->bl != bl;
@@ -2226,7 +2226,7 @@ static int decode_sb(Dav1dTileContext *const t, const enum BlockLevel bl,
         assert(have_v_split);
         unsigned is_split;
         if (f->frame_thread.pass == 2) {
-            Av1Block *const b = c->analyzer_settings & EXPORT_BLKDATA ?
+            Av1Block *const b = c->analyzer_flags & EXPORT_BLKDATA ?
                 &((Av1Block *) f->cur.blk_data)[t->by * f->b4_stride + t->bx] :
                 &f->frame_thread.b[t->by * f->b4_stride + t->bx];
             is_split = b->bl != bl;

@@ -68,14 +68,14 @@ typedef struct Dav1dSettings {
     Dav1dLogger logger;
 } Dav1dSettings;
 
-typedef struct Dav1dAnalyzerSettings {
+typedef struct Dav1dAnalyzerFlags {
     int export_prediction;
     int export_prefilter;
     int export_bitsperblk;  // Not implemented yet
     int export_bitsused;    // Not implemented yet
     int export_blkdata;
     int export_invisible_frames;
-} Dav1dAnalyzerSettings;
+} Dav1dAnalyzerFlags;
 
 /**
  * Get library version.
@@ -90,11 +90,11 @@ DAV1D_API const char *dav1d_version(void);
 DAV1D_API void dav1d_default_settings(Dav1dSettings *s);
 
 /**
- * Initialize analyzer settings to default values (all zero)
+ * Initialize analyzer flags to default values (all zero)
  *
- * @param s Input analyzer settings context.
+ * @param s Input analyzer flags context.
  */
-DAV1D_API void dav1d_default_analyzer_settings(Dav1dAnalyzerSettings *s);
+DAV1D_API void dav1d_default_analyzer_flags(Dav1dAnalyzerFlags *s);
 
 /**
  * Allocate and open a decoder instance.
@@ -121,7 +121,7 @@ DAV1D_API int dav1d_open(Dav1dContext **c_out, const Dav1dSettings *s);
  * 
  * @return 0 on success, or < 0 (a negative errno code) on error.
  */
-DAV1D_API int dav1d_set_analyzer_settings(Dav1dContext *c, const Dav1dAnalyzerSettings *s);
+DAV1D_API int dav1d_set_analyzer_flags(Dav1dContext *c, const Dav1dAnalyzerFlags *s);
 
 /**
  * Parse a Sequence Header OBU from bitstream data.

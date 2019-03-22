@@ -168,8 +168,7 @@ static int picture_alloc_with_edges(Dav1dContext *const c, Dav1dPicture *const p
                                     Dav1dMasteringDisplay *mastering_display, Dav1dRef *mastering_display_ref,
                                     const int bpc, const Dav1dDataProps *props,
                                     Dav1dPicAllocator *const p_allocator,
-                                    const size_t extra, void **const extra_ptr,
-                                    const unsigned analyzer_flags)
+                                    const size_t extra, void **const extra_ptr)
 {
     if (p->data[0]) {
         dav1d_log(c, "Picture already allocated!\n");
@@ -207,7 +206,7 @@ static int picture_alloc_with_edges(Dav1dContext *const c, Dav1dPicture *const p
         return -ENOMEM;
     }
 
-    picture_alloc_analyzer_storage(p, analyzer_flags);
+    picture_alloc_analyzer_storage(p, c->analyzer_flags);
 
     p->seq_hdr_ref = seq_hdr_ref;
     if (seq_hdr_ref) dav1d_ref_inc(seq_hdr_ref);
@@ -230,7 +229,7 @@ static int picture_alloc_with_edges(Dav1dContext *const c, Dav1dPicture *const p
 }
 
 int dav1d_thread_picture_alloc(Dav1dContext *const c, Dav1dFrameContext *const f,
-                               const int bpc, const unsigned analyzer_flags)
+                               const int bpc)
 {
     Dav1dThreadPicture *const p = &f->sr_cur;
     p->t = c->n_fc > 1 ? &f->frame_thread.td : NULL;
@@ -243,7 +242,7 @@ int dav1d_thread_picture_alloc(Dav1dContext *const c, Dav1dFrameContext *const f
                                  c->mastering_display, c->mastering_display_ref,
                                  bpc, &f->tile[0].data.m, &c->allocator,
                                  p->t != NULL ? sizeof(atomic_int) * 2 : 0,
-                                 (void **) &p->progress, analyzer_flags);
+                                 (void **) &p->progress);
     if (res) return res;
 
     p->visible = f->frame_hdr->show_frame;
@@ -255,8 +254,7 @@ int dav1d_thread_picture_alloc(Dav1dContext *const c, Dav1dFrameContext *const f
 }
 
 int dav1d_picture_alloc_copy(Dav1dContext *const c, Dav1dPicture *const dst, const int w,
-                             const Dav1dPicture *const src,
-                             const unsigned analyzer_flags)
+                             const Dav1dPicture *const src)
 {
     struct pic_ctx_context *const pic_ctx = src->ref->user_data;
     const int res = picture_alloc_with_edges(c, dst, w, src->p.h,
@@ -265,7 +263,7 @@ int dav1d_picture_alloc_copy(Dav1dContext *const c, Dav1dPicture *const dst, con
                                              src->content_light, src->content_light_ref,
                                              src->mastering_display, src->mastering_display_ref,
                                              src->p.bpc, &src->m, &pic_ctx->allocator,
-                                             0, NULL, analyzer_flags);
+                                             0, NULL);
     return res;
 }
 
