@@ -50,6 +50,9 @@ script:
 - meson build --buildtype release
 - ninja -C build
 
+before_deploy:
+- ll build/src
+
 deploy:
   skip_cleanup: true
   provider: releases
